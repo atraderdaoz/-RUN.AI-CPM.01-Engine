@@ -14,7 +14,7 @@ body {
 }
 
 .container {
-  max-width: 900px;
+  max-width: 1000px;
   margin: auto;
   padding: 20px;
 }
@@ -29,12 +29,31 @@ body {
 video, audio {
   width: 100%;
   border-radius: 10px;
-  margin-top: 10px;
 }
 
 .stat {
-  font-size: 20px;
-  margin: 6px 0;
+  font-size: 18px;
+  margin: 5px 0;
+}
+
+h2 {
+  margin-top: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
 }
 
 button {
@@ -57,45 +76,73 @@ button {
 
 <h1>©®™🏃🏿‍♂️RUN.AI CPM Engine</h1>
 
-<!-- VIDEO 1 -->
+<!-- MEDIA -->
+<div class="grid">
+
 <div class="card">
-<h3>Video 1</h3>
+<h2>🎥 Video 1</h2>
 <video id="video1" controls>
-  <source src="VID-20260317-WA0001.mp4" type="video/mp4">
+<source src="VID-20260317-WA0001.mp4">
 </video>
-
-<div class="stat">Plays: <span id="v1plays">0</span></div>
+<div class="stat">Plays: <span id="v1">0</span></div>
+<div class="stat">Revenue: $<span id="rev1">0</span></div>
 </div>
 
-<!-- VIDEO 2 -->
 <div class="card">
-<h3>Video 2</h3>
+<h2>🎥 Video 2</h2>
 <video id="video2" controls>
-  <source src="recording5.mp4" type="video/mp4">
+<source src="recording5.mp4">
 </video>
-
-<div class="stat">Plays: <span id="v2plays">0</span></div>
+<div class="stat">Plays: <span id="v2">0</span></div>
+<div class="stat">Revenue: $<span id="rev2">0</span></div>
 </div>
 
-<!-- AUDIO -->
+</div>
+
 <div class="card">
-<h3>Audio Track</h3>
+<h2>🎧 Audio</h2>
 <audio id="audio" controls>
-  <source src="lespri.mp3" type="audio/mpeg">
+<source src="lespri.mp3">
 </audio>
-
-<div class="stat">Audio Plays: <span id="aplay">0</span></div>
+<div class="stat">Plays: <span id="a">0</span></div>
+<div class="stat">Revenue: $<span id="revA">0</span></div>
 </div>
 
-<!-- GLOBAL -->
+<!-- DASHBOARD -->
 <div class="card">
-<h3>Global Engagement</h3>
+<h2>📊 Dashboard</h2>
 
-<div class="stat">Total Plays: <span id="totalPlays">0</span></div>
+<div class="stat">Total Plays: <span id="total">0</span></div>
 <div class="stat">Likes: <span id="likes">0</span></div>
 <div class="stat">Like Rate: <span id="rate">0%</span></div>
 
+<div class="stat">Total Revenue: $<span id="totalRev">0</span></div>
+
 <button onclick="like()">👍 Like</button>
+
+</div>
+
+<!-- CPM SETTINGS -->
+<div class="card">
+<h2>⚙️ CPM Settings</h2>
+
+<select id="location">
+<option value="tanzania">Tanzania</option>
+<option value="africa">Africa</option>
+<option value="international">International</option>
+</select>
+
+<select id="audience">
+<option value="general">General</option>
+<option value="crypto">Crypto</option>
+</select>
+
+<input id="engagement" value="5" placeholder="Engagement %">
+<input id="base" value="1" placeholder="Base CPM">
+
+<button onclick="updateCPM()">Update CPM</button>
+
+<div class="stat">Active CPM: $<span id="cpm">1</span></div>
 
 </div>
 
@@ -118,7 +165,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-const ref = doc(db, "run_ai_metrics", "multi_media");
+const ref = doc(db, "run_ai_metrics", "dashboard");
+
+// DEFAULT CPM
+let CPM = 1;
 
 async function init() {
   const snap = await getDoc(ref);
@@ -133,52 +183,77 @@ async function init() {
 }
 init();
 
+// LIVE DATA
 onSnapshot(ref, (snap) => {
   const d = snap.data();
 
-  document.getElementById("v1plays").innerText = d.video1;
-  document.getElementById("v2plays").innerText = d.video2;
-  document.getElementById("aplay").innerText = d.audio;
+  let v1 = d.video1 || 0;
+  let v2 = d.video2 || 0;
+  let a = d.audio || 0;
 
-  let total = d.video1 + d.video2 + d.audio;
+  document.getElementById("v1").innerText = v1;
+  document.getElementById("v2").innerText = v2;
+  document.getElementById("a").innerText = a;
 
-  document.getElementById("totalPlays").innerText = total;
   document.getElementById("likes").innerText = d.likes;
+
+  let total = v1 + v2 + a;
+  document.getElementById("total").innerText = total;
 
   let rate = total > 0 ? (d.likes / total) * 100 : 0;
   document.getElementById("rate").innerText = rate.toFixed(2) + "%";
+
+  // REVENUE CALC
+  let r1 = (v1 / 1000) * CPM;
+  let r2 = (v2 / 1000) * CPM;
+  let rA = (a / 1000) * CPM;
+
+  document.getElementById("rev1").innerText = r1.toFixed(2);
+  document.getElementById("rev2").innerText = r2.toFixed(2);
+  document.getElementById("revA").innerText = rA.toFixed(2);
+
+  let totalRev = r1 + r2 + rA;
+  document.getElementById("totalRev").innerText = totalRev.toFixed(2);
 });
 
-// TRACKERS
-let v1 = false, v2 = false, a = false;
+// CPM ENGINE
+window.updateCPM = function() {
 
-document.getElementById("video1").addEventListener("play", async () => {
-  if (!v1) {
-    v1 = true;
-    await updateDoc(ref, { video1: increment(1) });
-  }
-});
-document.getElementById("video1").onended = () => v1 = false;
+  let base = parseFloat(document.getElementById("base").value);
+  let engagement = parseFloat(document.getElementById("engagement").value);
+  let location = document.getElementById("location").value;
+  let audience = document.getElementById("audience").value;
 
-document.getElementById("video2").addEventListener("play", async () => {
-  if (!v2) {
-    v2 = true;
-    await updateDoc(ref, { video2: increment(1) });
-  }
-});
-document.getElementById("video2").onended = () => v2 = false;
+  let L = { tanzania: 0.5, africa: 1, international: 3 }[location];
+  let A = { general: 1, crypto: 3 }[audience];
+  let E = 1 + (engagement / 100) * 5;
 
-document.getElementById("audio").addEventListener("play", async () => {
-  if (!a) {
-    a = true;
-    await updateDoc(ref, { audio: increment(1) });
-  }
-});
-document.getElementById("audio").onended = () => a = false;
+  CPM = base * L * A * E;
+
+  document.getElementById("cpm").innerText = CPM.toFixed(2);
+};
+
+// TRACKING
+let v1c=false,v2c=false,ac=false;
+
+video1.onplay = async () => {
+  if(!v1c){ v1c=true; await updateDoc(ref,{video1:increment(1)}); }
+};
+video1.onended = ()=>v1c=false;
+
+video2.onplay = async () => {
+  if(!v2c){ v2c=true; await updateDoc(ref,{video2:increment(1)}); }
+};
+video2.onended = ()=>v2c=false;
+
+audio.onplay = async () => {
+  if(!ac){ ac=true; await updateDoc(ref,{audio:increment(1)}); }
+};
+audio.onended = ()=>ac=false;
 
 // LIKE
-window.like = async function () {
-  await updateDoc(ref, { likes: increment(1) });
+window.like = async function(){
+  await updateDoc(ref,{likes:increment(1)});
 };
 </script>
 
