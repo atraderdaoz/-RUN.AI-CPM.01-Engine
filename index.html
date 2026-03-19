@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>©®™🏃🏿‍♂️RUN.AI CPM Engine</title>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0d0d0d;
+  color: #fff;
+}
+
+.container {
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #161616;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+video, audio {
+  width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.stat {
+  font-size: 22px;
+  margin: 10px 0;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #00c27a;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>©®™🏃🏿‍♂️RUN.AI CPM Engine</h1>
+
+<div class="card">
+
+<!-- VIDEO -->
+<video id="video" controls>
+  <source src="VID-20260317-WA0001.mp4" type="video/mp4">
+</video>
+
+<!-- AUDIO -->
+<audio id="audio" controls>
+  <source src="Lespri Zansèt Yo (2).mp3" type="audio/mpeg">
+</audio>
+
+<div class="stat">Video Plays: <span id="plays">0</span></div>
+<div class="stat">Audio Plays: <span id="audioPlays">0</span></div>
+<div class="stat">Likes: <span id="likes">0</span></div>
+<div class="stat">Like Rate: <span id="rate">0%</span></div>
+
+<button onclick="like()">👍 Like</button>
+<button onclick="usePlays()">Use Video Plays as Impressions</button>
+
+</div>
+
+<div class="card">
+
+<input id="impressions" placeholder="Impressions">
+
+<select id="location">
+<option value="tanzania">Tanzania</option>
+<option value="africa">Africa</option>
+<option value="international">International</option>
+</select>
+
+<select id="audience">
+<option value="general">General</option>
+<option value="crypto">Crypto</option>
+</select>
+
+<input id="engagement" placeholder="Engagement %" value="5">
+<input id="base" placeholder="Base CPM" value="1">
+
+<button onclick="calc()">Calculate</button>
+
+<div id="result"></div>
+
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
+  authDomain: "run-ai-80fb7.firebaseapp.com",
+  projectId: "run-ai-80fb7",
+  storageBucket: "run-ai-80fb7.firebasestorage.app",
+  messagingSenderId: "962298240212",
+  appId: "1:962298240212:web:6642a45e94a6f583e3ef41"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const ref = doc(db, "run_ai_metrics", "main_media");
+
+async function init() {
+  const snap = await getDoc(ref);
+  if (!snap.exists()) {
+    await setDoc(ref, { plays: 0, audioPlays: 0, likes: 0 });
+  }
+}
+init();
+
+onSnapshot(ref, (snap) => {
+  const data = snap.data();
+
+  document.getElementById("plays").innerText = data.plays || 0;
+  document.getElementById("audioPlays").innerText = data.audioPlays || 0;
+  document.getElementById("likes").innerText = data.likes || 0;
+
+  let rate = data.plays > 0 ? (data.likes / data.plays) * 100 : 0;
+  document.getElementById("rate").innerText = rate.toFixed(2) + "%";
+});
+
+let countedVideo = false;
+let countedAudio = false;
+
+document.getElementById("video").addEventListener("play", async () => {
+  if (!countedVideo) {
+    countedVideo = true;
+    await updateDoc(ref, { plays: increment(1) });
+  }
+});
+
+document.getElementById("video").addEventListener("ended", () => {
+  countedVideo = false;
+});
+
+document.getElementById("audio").addEventListener("play", async () => {
+  if (!countedAudio) {
+    countedAudio = true;
+    await updateDoc(ref, { audioPlays: increment(1) });
+  }
+});
+
+document.getElementById("audio").addEventListener("ended", () => {
+  countedAudio = false;
+});
+
+window.like = async function () {
+  await updateDoc(ref, { likes: increment(1) });
+};
+
+window.usePlays = function () {
+  document.getElementById("impressions").value =
+    document.getElementById("plays").innerText;
+};
+
+window.calc = function () {
+
+  let impressions = parseFloat(document.getElementById("impressions").value) || 0;
+  let base = parseFloat(document.getElementById("base").value);
+  let engagement = parseFloat(document.getElementById("engagement").value);
+  let location = document.getElementById("location").value;
+  let audience = document.getElementById("audience").value;
+
+  let L = { tanzania: 0.5, africa: 1, international: 3 }[location];
+  let A = { general: 1, crypto: 3 }[audience];
+  let E = 1 + (engagement / 100) * 5;
+
+  let CPM = base * L * A * E;
+  let revenue = (impressions / 1000) * CPM;
+
+  document.getElementById("result").innerHTML =
+    "CPM: $" + CPM.toFixed(2) +
+    "<br>Revenue: $" + revenue.toFixed(2);
+};
+</script>
+
+</body>
+</html>
