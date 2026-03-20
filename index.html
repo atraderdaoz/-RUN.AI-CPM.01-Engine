@@ -160,10 +160,21 @@ button {
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
+import { 
+  getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// 🔥 INIT
 const firebaseConfig = {
   apiKey: "AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
   authDomain: "run-ai-80fb7.firebaseapp.com",
@@ -175,11 +186,45 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
 
+// 🔐 AUTH STATE
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    document.getElementById("userStatus").innerText = user.email;
+  } else {
+    document.getElementById("userStatus").innerText = "Not logged in";
+  }
+});
+
+// 🔐 LOGIN
+window.login = async function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  await signInWithEmailAndPassword(auth, email, password);
+};
+
+// 🔐 SIGNUP
+window.signup = async function(){
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  const userCred = await createUserWithEmailAndPassword(auth, email, password);
+
+  // create user profile
+  await setDoc(doc(db,"users",userCred.user.uid),{
+    totalEarnings: 0,
+    withdrawableBalance: 0
+  });
+};
+
+// 📊 DATA
 const ref = doc(db, "run_ai_metrics", "dashboard");
 
-// DEFAULT CPM
 let CPM = 1;
+
+// 💰 CREDIT FUNCTION
 async function credit(amount){
   const user = auth.currentUser;
   if(!user) return;
@@ -189,6 +234,8 @@ async function credit(amount){
     withdrawableBalance: increment(amount)
   });
 }
+
+// INIT
 async function init() {
   const snap = await getDoc(ref);
   if (!snap.exists()) {
@@ -196,16 +243,19 @@ async function init() {
       video1: 0,
       video2: 0,
       audio: 0,
-      likes: 0
+      likes: 0,
+      cpm: 1
     });
   }
 }
 init();
 
-// LIVE DATA
+// 🔴 LIVE DATA
 onSnapshot(ref, (snap) => {
   const d = snap.data();
-CPM = d.cpm || 1;
+
+  CPM = d.cpm || 1;
+
   let v1 = d.video1 || 0;
   let v2 = d.video2 || 0;
   let a = d.audio || 0;
@@ -213,7 +263,6 @@ CPM = d.cpm || 1;
   document.getElementById("v1").innerText = v1;
   document.getElementById("v2").innerText = v2;
   document.getElementById("a").innerText = a;
-
   document.getElementById("likes").innerText = d.likes;
 
   let total = v1 + v2 + a;
@@ -222,7 +271,7 @@ CPM = d.cpm || 1;
   let rate = total > 0 ? (d.likes / total) * 100 : 0;
   document.getElementById("rate").innerText = rate.toFixed(2) + "%";
 
-  // REVENUE CALC
+  // 💰 REVENUE
   let r1 = (v1 / 1000) * CPM;
   let r2 = (v2 / 1000) * CPM;
   let rA = (a / 1000) * CPM;
@@ -234,21 +283,9 @@ CPM = d.cpm || 1;
   let totalRev = r1 + r2 + rA;
   document.getElementById("totalRev").innerText = totalRev.toFixed(2);
 });
- const user = auth.currentUser;
 
-if(user){
-
-  let userRef = doc(db,"users",user.uid);
-
-  let totalRevenue = r1 + r2 + rA;
-
-  updateDoc(userRef,{
-    totalEarnings: increment(totalRevenue),
-    withdrawableBalance: increment(totalRevenue)
-  });
-}
-// CPM ENGINE
-window.updateCPM = function() {
+// ⚙️ CPM UPDATE
+window.updateCPM = async function(){
 
   let base = parseFloat(document.getElementById("base").value);
   let engagement = parseFloat(document.getElementById("engagement").value);
@@ -262,26 +299,25 @@ window.updateCPM = function() {
   CPM = base * L * A * E;
 
   document.getElementById("cpm").innerText = CPM.toFixed(2);
+
   await updateDoc(ref,{cpm:CPM});
 };
 
-// TRACKING
-// TRACK
+// ▶️ TRACKING
 let f1=false,f2=false,f3=false;
 
 video1.onplay = async ()=>{
   if(!f1){
     f1 = true;
-
     await updateDoc(ref,{video1:increment(1)});
-    await credit(CPM/1000); // 💰 add earnings
+    await credit(CPM/1000);
   }
 };
 video1.onended = ()=> f1=false;
+
 video2.onplay = async ()=>{
   if(!f2){
     f2 = true;
-
     await updateDoc(ref,{video2:increment(1)});
     await credit(CPM/1000);
   }
@@ -291,17 +327,18 @@ video2.onended = ()=> f2=false;
 audio.onplay = async ()=>{
   if(!f3){
     f3 = true;
-
     await updateDoc(ref,{audio:increment(1)});
     await credit(CPM/1000);
   }
 };
 audio.onended = ()=> f3=false;
 
-// LIKE
+// 👍 LIKE
 window.like = async function(){
   await updateDoc(ref,{likes:increment(1)});
 };
+
 </script>
+  
 </body>
 </html>
