@@ -251,6 +251,7 @@ window.updateCPM = function() {
   CPM = base * L * A * E;
 
   document.getElementById("cpm").innerText = CPM.toFixed(2);
+  await updateDoc(ref,{cpm:CPM});
 };
 
 // TRACKING
