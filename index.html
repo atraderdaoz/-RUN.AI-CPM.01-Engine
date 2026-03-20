@@ -266,10 +266,15 @@ video1.onplay = async ()=>{
   }
 };
 video1.onended = ()=> f1=false;
-video2.onplay = async () => {
-  if(!v2c){ v2c=true; await updateDoc(ref,{video2:increment(1)}); }
+video2.onplay = async ()=>{
+  if(!f2){
+    f2 = true;
+
+    await updateDoc(ref,{video2:increment(1)});
+    await credit(CPM/1000);
+  }
 };
-video2.onended = ()=>v2c=false;
+video2.onended = ()=> f2=false;
 
 audio.onplay = async () => {
   if(!ac){ ac=true; await updateDoc(ref,{audio:increment(1)}); }
