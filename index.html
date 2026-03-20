@@ -194,7 +194,7 @@ init();
 // LIVE DATA
 onSnapshot(ref, (snap) => {
   const d = snap.data();
-
+CPM = d.cpm || 1;
   let v1 = d.video1 || 0;
   let v2 = d.video2 || 0;
   let a = d.audio || 0;
