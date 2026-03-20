@@ -276,10 +276,15 @@ video2.onplay = async ()=>{
 };
 video2.onended = ()=> f2=false;
 
-audio.onplay = async () => {
-  if(!ac){ ac=true; await updateDoc(ref,{audio:increment(1)}); }
+audio.onplay = async ()=>{
+  if(!f3){
+    f3 = true;
+
+    await updateDoc(ref,{audio:increment(1)});
+    await credit(CPM/1000);
+  }
 };
-audio.onended = ()=>ac=false;
+audio.onended = ()=> f3=false;
 
 // LIKE
 window.like = async function(){
