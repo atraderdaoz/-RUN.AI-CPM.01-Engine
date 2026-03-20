@@ -169,7 +169,15 @@ const ref = doc(db, "run_ai_metrics", "dashboard");
 
 // DEFAULT CPM
 let CPM = 1;
+async function credit(amount){
+  const user = auth.currentUser;
+  if(!user) return;
 
+  await updateDoc(doc(db,"users",user.uid),{
+    totalEarnings: increment(amount),
+    withdrawableBalance: increment(amount)
+  });
+}
 async function init() {
   const snap = await getDoc(ref);
   if (!snap.exists()) {
