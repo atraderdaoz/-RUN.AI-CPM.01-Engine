@@ -36,6 +36,269 @@ video, audio {
   margin: 5px 0;
 }
 
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  background: #222;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  background: #00c27a;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+#logoutBtn {
+  background: red;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- 🔐 LOGIN -->
+<div class="card" id="loginCard">
+<h2>🔐 Login</h2>
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="login()">Login</button>
+<button onclick="signup()">Sign Up</button>
+
+<button onclick="googleLogin()" style="background:#4285F4">
+🔵 Sign in with Google
+</button>
+
+<div class="stat">User: <span id="userStatus">Not logged in</span></div>
+</div>
+
+<!-- 🔓 LOGOUT -->
+<button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+
+<h1>©®™🏃🏿‍♂️RUN.AI CPM Engine</h1>
+
+<!-- MEDIA -->
+<div class="grid">
+<div class="card">
+<h2>🎥 Video 1</h2>
+<video id="video1" controls>
+<source src="VID-20260317-WA0001.mp4">
+</video>
+<div class="stat">Plays: <span id="v1">0</span></div>
+<div class="stat">Revenue: $<span id="rev1">0</span></div>
+</div>
+
+<div class="card">
+<h2>🎥 Video 2</h2>
+<video id="video2" controls>
+<source src="recording5.mp4">
+</video>
+<div class="stat">Plays: <span id="v2">0</span></div>
+<div class="stat">Revenue: $<span id="rev2">0</span></div>
+</div>
+</div>
+
+<div class="card">
+<h2>🎧 Audio</h2>
+<audio id="audio" controls>
+<source src="lespri.mp3">
+</audio>
+<div class="stat">Plays: <span id="a">0</span></div>
+<div class="stat">Revenue: $<span id="revA">0</span></div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="card">
+<h2>📊 Dashboard</h2>
+<div class="stat">Total Plays: <span id="total">0</span></div>
+<div class="stat">Likes: <span id="likes">0</span></div>
+<div class="stat">Like Rate: <span id="rate">0%</span></div>
+<div class="stat">Total Revenue: $<span id="totalRev">0</span></div>
+<button onclick="like()">👍 Like</button>
+</div>
+
+<!-- CPM -->
+<div class="card">
+<h2>⚙️ CPM Settings</h2>
+
+<select id="location">
+<option value="tanzania">Tanzania</option>
+<option value="africa">Africa</option>
+<option value="international">International</option>
+</select>
+
+<select id="audience">
+<option value="general">General</option>
+<option value="crypto">Crypto</option>
+</select>
+
+<input id="engagement" value="5">
+<input id="base" value="1">
+
+<button onclick="updateCPM()">Update CPM</button>
+
+<div class="stat">Active CPM: $<span id="cpm">1</span></div>
+</div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  onAuthStateChanged,
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "run-ai-80fb7.firebaseapp.com",
+  projectId: "run-ai-80fb7",
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// 🔐 AUTH STATE UI CONTROL
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    userStatus.innerText = user.email;
+    loginCard.style.display = "none";
+    logoutBtn.style.display = "block";
+  } else {
+    userStatus.innerText = "Not logged in";
+    loginCard.style.display = "block";
+    logoutBtn.style.display = "none";
+  }
+});
+
+// 🔐 AUTH FUNCTIONS
+window.login = async () => {
+  await signInWithEmailAndPassword(auth, email.value, password.value);
+};
+
+window.signup = async () => {
+  const cred = await createUserWithEmailAndPassword(auth, email.value, password.value);
+  await setDoc(doc(db,"users",cred.user.uid),{
+    totalEarnings:0,
+    withdrawableBalance:0
+  });
+};
+
+window.logout = async () => {
+  await signOut(auth);
+};
+
+window.googleLogin = async () => {
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+
+  const refUser = doc(db,"users",result.user.uid);
+  const snap = await getDoc(refUser);
+
+  if(!snap.exists()){
+    await setDoc(refUser,{
+      totalEarnings:0,
+      withdrawableBalance:0
+    });
+  }
+};
+
+// 📊 DATA
+const ref = doc(db,"run_ai_metrics","dashboard");
+let CPM = 1;
+
+async function init(){
+  if(!(await getDoc(ref)).exists()){
+    await setDoc(ref,{video1:0,video2:0,audio:0,likes:0,cpm:1});
+  }
+}
+init();
+
+onSnapshot(ref,(snap)=>{
+  let d = snap.data();
+  CPM = d.cpm || 1;
+
+  let v1=d.video1||0, v2=d.video2||0, a=d.audio||0;
+
+  v1El.innerText=v1; v2El.innerText=v2; aEl.innerText=a;
+  likes.innerText=d.likes;
+
+  let total=v1+v2+a;
+  totalEl.innerText=total;
+  rate.innerText=((d.likes/total||0)*100).toFixed(2)+"%";
+
+  let r1=(v1/1000)*CPM, r2=(v2/1000)*CPM, rA=(a/1000)*CPM;
+
+  rev1.innerText=r1.toFixed(2);
+  rev2.innerText=r2.toFixed(2);
+  revA.innerText=rA.toFixed(2);
+  totalRev.innerText=(r1+r2+rA).toFixed(2);
+});
+
+// CPM
+window.updateCPM = async ()=>{
+  let base=+baseInput.value;
+  let eng=+engagement.value;
+  let L={tanzania:0.5,africa:1,international:3}[location.value];
+  let A={general:1,crypto:3}[audience.value];
+  let E=1+(eng/100)*5;
+
+  CPM=base*L*A*E;
+  cpm.innerText=CPM.toFixed(2);
+
+  await updateDoc(ref,{cpm:CPM});
+};
+
+// TRACKING
+async function credit(val){
+  let u=auth.currentUser;
+  if(!u) return;
+  await updateDoc(doc(db,"users",u.uid),{
+    totalEarnings:increment(val),
+    withdrawableBalance:increment(val)
+  });
+}
+
+video1.onplay=async()=>{await updateDoc(ref,{video1:increment(1)});await credit(CPM/1000);}
+video2.onplay=async()=>{await updateDoc(ref,{video2:increment(1)});await credit(CPM/1000);}
+audio.onplay=async()=>{await updateDoc(ref,{audio:increment(1)});await credit(CPM/1000);}
+
+window.like=async()=>{await updateDoc(ref,{likes:increment(1)})};
+
+</script>
+
+</body>
+</html>}
+
 h2 {
   margin-top: 0;
 }
