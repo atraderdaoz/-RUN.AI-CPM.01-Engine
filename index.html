@@ -254,13 +254,18 @@ window.updateCPM = function() {
 };
 
 // TRACKING
-let v1c=false,v2c=false,ac=false;
+// TRACK
+let f1=false,f2=false,f3=false;
 
-video1.onplay = async () => {
-  if(!v1c){ v1c=true; await updateDoc(ref,{video1:increment(1)}); }
+video1.onplay = async ()=>{
+  if(!f1){
+    f1 = true;
+
+    await updateDoc(ref,{video1:increment(1)});
+    await credit(CPM/1000); // 💰 add earnings
+  }
 };
-video1.onended = ()=>v1c=false;
-
+video1.onended = ()=> f1=false;
 video2.onplay = async () => {
   if(!v2c){ v2c=true; await updateDoc(ref,{video2:increment(1)}); }
 };
