@@ -215,7 +215,19 @@ onSnapshot(ref, (snap) => {
   let totalRev = r1 + r2 + rA;
   document.getElementById("totalRev").innerText = totalRev.toFixed(2);
 });
+ const user = auth.currentUser;
 
+if(user){
+
+  let userRef = doc(db,"users",user.uid);
+
+  let totalRevenue = r1 + r2 + rA;
+
+  updateDoc(userRef,{
+    totalEarnings: increment(totalRevenue),
+    withdrawableBalance: increment(totalRevenue)
+  });
+}
 // CPM ENGINE
 window.updateCPM = function() {
 
