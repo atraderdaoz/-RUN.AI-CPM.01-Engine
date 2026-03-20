@@ -202,6 +202,32 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
+  window.googleLogin = async function(){
+
+  const provider = new GoogleAuthProvider();
+
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+
+    document.getElementById("userStatus").innerText = user.email;
+
+    // ✅ Create user in Firestore if not exists
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        totalEarnings: 0,
+        withdrawableBalance: 0
+      });
+    }
+
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
+};
 // 🔐 LOGIN
 window.login = async function(){
   const email = document.getElementById("email").value;
