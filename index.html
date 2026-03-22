@@ -232,7 +232,15 @@ video2.onplay=async()=>{await updateDoc(ref,{video2:increment(1)});await credit(
 audio.onplay=async()=>{await updateDoc(ref,{audio:increment(1)});await credit(CPM/1000);}
 
 window.like=async()=>{await updateDoc(ref,{likes:increment(1)})};
+window.copyWallet = function(){
+  const input = document.getElementById("wallet");
+  input.select();
+  input.setSelectionRange(0, 99999);
 
+  navigator.clipboard.writeText(input.value);
+
+  alert("Wallet address copied!");
+};
 </script>
 </body>
                     </html>
