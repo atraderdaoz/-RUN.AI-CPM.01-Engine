@@ -1,246 +1,235 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>©®™🏃🏿‍♂️RUN.AI CPM Engine</title>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
 <style>
-body { margin:0; font-family:Arial; background:#0d0d0d; color:#fff; }
-.container { max-width:1000px; margin:auto; padding:20px; }
-.card { background:#161616; padding:20px; border-radius:12px; margin-bottom:20px; }
-video,audio { width:100%; border-radius:10px; }
-.stat { font-size:18px; margin:5px 0; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-input,select { width:100%; padding:10px; margin-top:10px; background:#222; color:#fff; border:none; border-radius:6px; }
-button { padding:10px; margin-top:10px; width:100%; border:none; border-radius:8px; background:#00c27a; color:#fff; font-weight:bold; cursor:pointer; }
-#logoutBtn { background:red; }
+body{margin:0;font-family:Arial;background:#0d0d0d;color:#fff}
+.container{max-width:1000px;margin:auto;padding:20px}
+.card{background:#161616;padding:15px;border-radius:12px;margin-bottom:15px}
+video,audio{width:100%;border-radius:10px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+input,select,button{width:100%;padding:10px;margin-top:8px;border:none;border-radius:6px}
+button{background:#00c27a;color:#fff;font-weight:bold;cursor:pointer}
+.small{font-size:12px;color:#aaa}
 </style>
 </head>
 
 <body>
-  <div class="card">
-<h2>💳 Deposit / Donations (XLM)</h2>
-
-<img src="Bxlm.jpeg" style="width:200px;border-radius:10px;display:block;margin:auto;">
-
-<div class="stat">Network:<b> BCS </b></div>
-
-<div class="stat">Address:</div>
-
-<input id="wallet" value="0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23" readonly>
-
-<button onclick="copyWallet()">📋 Copy Address</button>
-
-<div class="stat" style="color:#ff7777;font-size:14px;">
-⚠️ Send only XLM via BCS network
-</div>
-</div>
 <div class="container">
 
-<!-- LOGIN -->
+<!-- 💳 WALLET -->
+<div class="card">
+<h3>💳 XLM Donations</h3>
+<img src="Bxlm.jpeg" style="width:150px;display:block;margin:auto">
+<input id="wallet" value="0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23" readonly>
+<button onclick="copyWallet()">Copy</button>
+</div>
+
+<!-- 🔐 LOGIN -->
 <div class="card" id="loginCard">
-<h2>🔐 Login</h2>
 <input id="email" placeholder="Email">
 <input id="password" type="password" placeholder="Password">
 <button onclick="login()">Login</button>
 <button onclick="signup()">Sign Up</button>
-<button onclick="googleLogin()" style="background:#4285F4">🔵 Sign in with Google</button>
-<div class="stat">User: <span id="userStatus">Not logged in</span></div>
+<button onclick="googleLogin()">Google</button>
+<div id="userStatus">Not logged</div>
 </div>
 
-<button id="logoutBtn" onclick="logout()" style="display:none;">Logout</button>
+<button onclick="logout()">Logout</button>
 
-<h1>©®™🏃🏿‍♂️RUN.AI CPM Engine</h1>
+<h2>RUN.AI CPM</h2>
 
+<!-- 🎥 MEDIA -->
 <div class="grid">
 <div class="card">
-<h2>🎥 Video 1</h2>
-<video id="video1" controls><source src="VID-20260317-WA0001.mp4"></video>
-<div class="stat">Plays: <span id="v1">0</span></div>
-<div class="stat">Revenue: $<span id="rev1">0</span></div>
+<video id="video1" controls src="VID-20260317-WA0001.mp4"></video>
+<div>Plays <span id="v1">0</span></div>
+<div>$<span id="rev1">0</span></div>
 </div>
 
 <div class="card">
-<h2>🎥 Video 2</h2>
-<video id="video2" controls><source src="G-Riddim.mp4"></video>
-<div class="stat">Plays: <span id="v2">0</span></div>
-<div class="stat">Revenue: $<span id="rev2">0</span></div>
+<video id="video2" controls src="G-Riddim.mp4"></video>
+<div>Plays <span id="v2">0</span></div>
+<div>$<span id="rev2">0</span></div>
 </div>
 </div>
 
 <div class="card">
-<h2>🎧 Audio</h2>
-<audio id="audio" controls><source src="lespri.mp3"></audio>
-<div class="stat">Plays: <span id="a">0</span></div>
-<div class="stat">Revenue: $<span id="revA">0</span></div>
+<audio id="audio" controls src="lespri.mp3"></audio>
+<div>Plays <span id="a">0</span></div>
+<div>$<span id="revA">0</span></div>
 </div>
 
+<!-- 📊 DASHBOARD -->
 <div class="card">
-<h2>📊 Dashboard</h2>
-<div class="stat">Total Plays: <span id="total">0</span></div>
-<div class="stat">Likes: <span id="likes">0</span></div>
-<div class="stat">Like Rate: <span id="rate">0%</span></div>
-<div class="stat">Total Revenue: $<span id="totalRev">0</span></div>
-<button onclick="like()">👍 Like</button>
+<div>Total <span id="total">0</span></div>
+<div>Likes <span id="likes">0</span></div>
+<div>$<span id="totalRev">0</span></div>
+<button onclick="like()">Like</button>
 </div>
 
+<!-- ⚙️ CPM -->
 <div class="card">
-<h2>⚙️ CPM Settings</h2>
 <select id="location">
-<option value="tanzania">Tanzania</option>
-<option value="africa">Africa</option>
-<option value="international">International</option>
+<option value="tanzania">TZ</option>
+<option value="africa">AF</option>
+<option value="international">INT</option>
 </select>
 
 <select id="audience">
-<option value="general">General</option>
-<option value="crypto">Crypto</option>
+<option value="general">GEN</option>
+<option value="crypto">CRYPTO</option>
 </select>
 
 <input id="engagement" value="5">
 <input id="base" value="1">
-
 <button onclick="updateCPM()">Update CPM</button>
-<div class="stat">Active CPM: $<span id="cpm">1</span></div>
+<div>$<span id="cpm">1</span></div>
+</div>
+
+<!-- 🔗 SUBSCRIPTION -->
+<div class="card">
+<h3>Subscription (5 USDT)</h3>
+<button id="connect">Connect</button>
+<button id="switch">Switch</button>
+<button id="pay" disabled>Activate</button>
+<div id="walletWeb3">-</div>
+<div id="status">Idle</div>
 </div>
 
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {getFirestore,doc,onSnapshot,updateDoc,setDoc,getDoc,increment} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import {getAuth,createUserWithEmailAndPassword,signInWithEmailAndPassword,onAuthStateChanged,signOut,GoogleAuthProvider,signInWithPopup} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// ✅ FULL CONFIG (FIXED)
-const firebaseConfig = {
-  apiKey: "AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
-  authDomain: "run-ai-80fb7.firebaseapp.com",
-  projectId: "run-ai-80fb7",
-  storageBucket: "run-ai-80fb7.appspot.com",
-  messagingSenderId: "962298240212",
-  appId: "1:962298240212:web:6642a45e94a6f583e3ef41"
-};
+/* 🔥 FIREBASE */
+const app=initializeApp({
+apiKey:"AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
+authDomain:"run-ai-80fb7.firebaseapp.com",
+projectId:"run-ai-80fb7"
+});
+const db=getFirestore(app),auth=getAuth(app);
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
-// DOM refs (FIXED)
-const userStatus = document.getElementById("userStatus");
-const loginCard = document.getElementById("loginCard");
-const logoutBtn = document.getElementById("logoutBtn");
-
-// AUTH STATE
-onAuthStateChanged(auth, (user)=>{
-  if(user){
-    userStatus.innerText=user.email;
-    loginCard.style.display="none";
-    logoutBtn.style.display="block";
-  } else {
-    userStatus.innerText="Not logged in";
-    loginCard.style.display="block";
-    logoutBtn.style.display="none";
-  }
+/* 🔐 AUTH */
+onAuthStateChanged(auth,u=>{
+userStatus.innerText=u?u.email:"Not logged";
+loginCard.style.display=u?"none":"block";
 });
 
-// AUTH FUNCTIONS (WITH ERROR HANDLING)
-window.login = async ()=>{
-  try{
-    await signInWithEmailAndPassword(auth,email.value,password.value);
-  }catch(e){alert(e.message);}
+window.login=()=>signInWithEmailAndPassword(auth,email.value,password.value);
+window.signup=async()=>{
+let u=await createUserWithEmailAndPassword(auth,email.value,password.value);
+await setDoc(doc(db,"users",u.user.uid),{totalEarnings:0,withdrawableBalance:0});
 };
+window.logout=()=>signOut(auth);
+window.googleLogin=()=>signInWithPopup(auth,new GoogleAuthProvider());
 
-window.signup = async ()=>{
-  try{
-    const cred=await createUserWithEmailAndPassword(auth,email.value,password.value);
-    await setDoc(doc(db,"users",cred.user.uid),{totalEarnings:0,withdrawableBalance:0});
-  }catch(e){alert(e.message);}
-};
-
-window.logout = async ()=>{ await signOut(auth); };
-
-window.googleLogin = async ()=>{
-  try{
-    const res=await signInWithPopup(auth,new GoogleAuthProvider());
-    const refUser=doc(db,"users",res.user.uid);
-    if(!(await getDoc(refUser)).exists()){
-      await setDoc(refUser,{totalEarnings:0,withdrawableBalance:0});
-    }
-  }catch(e){alert(e.message);}
-};
-
-// DATA
-const ref = doc(db,"run_ai_metrics","dashboard");
+/* 📊 DATA */
+const ref=doc(db,"run_ai_metrics","dashboard");
 let CPM=1;
 
 if(!(await getDoc(ref)).exists()){
-  await setDoc(ref,{video1:0,video2:0,audio:0,likes:0,cpm:1});
+await setDoc(ref,{video1:0,video2:0,audio:0,likes:0,cpm:1});
 }
 
-onSnapshot(ref,(snap)=>{
-  let d=snap.data();
+onSnapshot(ref,s=>{
+let d=s.data(),v1=d.video1||0,v2=d.video2||0,a=d.audio||0;
+v1?0:0;
+document.getElementById("v1").innerText=v1;
+document.getElementById("v2").innerText=v2;
+document.getElementById("a").innerText=a;
+document.getElementById("likes").innerText=d.likes;
 
-  let v1=d.video1||0,v2=d.video2||0,a=d.audio||0;
+let t=v1+v2+a;
+total.innerText=t;
 
-  document.getElementById("v1").innerText=v1;
-  document.getElementById("v2").innerText=v2;
-  document.getElementById("a").innerText=a;
-  document.getElementById("likes").innerText=d.likes;
+CPM=d.cpm||1;
 
-  let total=v1+v2+a;
-  document.getElementById("total").innerText=total;
-  document.getElementById("rate").innerText=((d.likes/total||0)*100).toFixed(2)+"%";
-
-  CPM=d.cpm||1;
-
-  let r1=(v1/1000)*CPM,r2=(v2/1000)*CPM,rA=(a/1000)*CPM;
-
-  document.getElementById("rev1").innerText=r1.toFixed(2);
-  document.getElementById("rev2").innerText=r2.toFixed(2);
-  document.getElementById("revA").innerText=rA.toFixed(2);
-  document.getElementById("totalRev").innerText=(r1+r2+rA).toFixed(2);
+let r1=(v1/1000)*CPM,r2=(v2/1000)*CPM,rA=(a/1000)*CPM;
+rev1.innerText=r1.toFixed(2);
+rev2.innerText=r2.toFixed(2);
+revA.innerText=rA.toFixed(2);
+totalRev.innerText=(r1+r2+rA).toFixed(2);
 });
 
-// CPM
-window.updateCPM = async ()=>{
-  let base=+document.getElementById("base").value;
-  let eng=+document.getElementById("engagement").value;
-
-  let L={tanzania:0.5,africa:1,international:3}[location.value];
-  let A={general:1,crypto:3}[audience.value];
-  let E=1+(eng/100)*5;
-
-  CPM=base*L*A*E;
-  document.getElementById("cpm").innerText=CPM.toFixed(2);
-
-  await updateDoc(ref,{cpm:CPM});
+/* CPM */
+window.updateCPM=async()=>{
+let L={tanzania:.5,africa:1,international:3}[location.value];
+let A={general:1,crypto:3}[audience.value];
+CPM=base.value*L*A*(1+(engagement.value/100)*5);
+cpm.innerText=CPM.toFixed(2);
+await updateDoc(ref,{cpm:CPM});
 };
 
-// TRACKING
+/* 💰 CREDIT */
 async function credit(v){
-  let u=auth.currentUser;
-  if(!u) return;
-  await updateDoc(doc(db,"users",u.uid),{
-    totalEarnings:increment(v),
-    withdrawableBalance:increment(v)
-  });
+let u=auth.currentUser;
+if(!u) return;
+await updateDoc(doc(db,"users",u.uid),{
+totalEarnings:increment(v),
+withdrawableBalance:increment(v)
+});
 }
 
-video1.onplay=async()=>{await updateDoc(ref,{video1:increment(1)});await credit(CPM/1000);}
-video2.onplay=async()=>{await updateDoc(ref,{video2:increment(1)});await credit(CPM/1000);}
-audio.onplay=async()=>{await updateDoc(ref,{audio:increment(1)});await credit(CPM/1000);}
+video1.onplay=()=>{updateDoc(ref,{video1:increment(1)});credit(CPM/1000);}
+video2.onplay=()=>{updateDoc(ref,{video2:increment(1)});credit(CPM/1000);}
+audio.onplay =()=>{updateDoc(ref,{audio:increment(1)});credit(CPM/1000);}
 
-window.like=async()=>{await updateDoc(ref,{likes:increment(1)})};
-window.copyWallet = function(){
-  const input = document.getElementById("wallet");
-  input.select();
-  input.setSelectionRange(0, 99999);
+window.like=()=>updateDoc(ref,{likes:increment(1)});
+window.copyWallet=()=>navigator.clipboard.writeText(wallet.value);
 
-  navigator.clipboard.writeText(input.value);
+/* 🔗 WEB3 SUB */
+const CFG={
+chain:"0x38",
+name:"BNB Chain",
+rpc:["https://bsc-dataseed.binance.org/"],
+currency:{name:"BNB",symbol:"BNB",decimals:18},
+usdt:"0x55d398326f99059fF775485246999027B3197955",
+to:"0x000000000000000000000000000000000000dEaD",
+amt:"5"
+};
 
-  alert("Wallet address copied!");
+const ABI=["function decimals()view returns(uint8)","function balanceOf(address)view returns(uint256)","function transfer(address,uint256)returns(bool)"];
+
+let p,s,u;
+
+const log=t=>status.innerText=t;
+
+connect.onclick=async()=>{
+p=new ethers.providers.Web3Provider(window.ethereum);
+await p.send("eth_requestAccounts",[]);
+s=p.getSigner();u=await s.getAddress();
+walletWeb3.innerText=u;
+pay.disabled=false;
+};
+
+switch.onclick=()=>ethereum.request({method:"wallet_switchEthereumChain",params:[{chainId:CFG.chain}]});
+
+pay.onclick=async()=>{
+let net=await p.getNetwork();
+if(net.chainId!==parseInt(CFG.chain,16)) return log("Wrong network");
+
+let t=new ethers.Contract(CFG.usdt,ABI,s);
+let d=await t.decimals();
+let amt=ethers.utils.parseUnits(CFG.amt,d);
+
+if((await t.balanceOf(u)).lt(amt)) return log("No balance");
+
+let tx=await t.transfer(CFG.to,amt);
+await tx.wait();
+
+let end=new Date();end.setMonth(end.getMonth()+1);
+localStorage.setItem("sub_"+u,JSON.stringify(end));
+
+log("Active until "+end.toLocaleString());
 };
 </script>
 </body>
-                    </html>
+</html>
