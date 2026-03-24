@@ -3,26 +3,25 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>©®™🏃🏿‍♂️RUN.AI CPM Engine</title>
+<title>RUN.AI CPM Engine</title>
 
 <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#0d0d0d; color:#fff; }
-.container { max-width:1000px; margin:auto; padding:20px; }
-.card { background:#161616; padding:20px; border-radius:12px; margin-bottom:20px; }
-.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
-video,audio { width:100%; border-radius:10px; }
-button,input { width:100%; padding:10px; margin-top:10px; border:none; border-radius:6px; }
-button { background:#00c27a; color:#fff; cursor:pointer; }
-.menu { display:flex; gap:10px; padding:10px; background:#111; }
-.page { display:none; }
+body {margin:0;font-family:Arial;background:#0d0d0d;color:#fff;}
+.container {max-width:1000px;margin:auto;padding:20px;}
+.card {background:#161616;padding:20px;border-radius:12px;margin-bottom:20px;}
+.grid {display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+video,audio {width:100%;border-radius:10px;}
+button,input {width:100%;padding:10px;margin-top:10px;border:none;border-radius:6px;}
+button {background:#00c27a;color:#fff;cursor:pointer;}
+.menu {display:flex;gap:10px;padding:10px;background:#111;}
+.page {display:none;}
 </style>
 </head>
 
 <body>
 
-<!-- MENU -->
 <div class="menu">
 <button onclick="show('dashboard')">📊 Dashboard</button>
 <button onclick="show('subscription')">💳 Subscription</button>
@@ -44,7 +43,7 @@ button { background:#00c27a; color:#fff; cursor:pointer; }
 <div>User: <span id="userStatus">Not logged in</span></div>
 </div>
 
-<h1>RUN.AI CPM Engine</h1>
+<h2>RUN.AI CPM Engine</h2>
 
 <div class="grid">
 <div class="card">
@@ -101,9 +100,7 @@ button { background:#00c27a; color:#fff; cursor:pointer; }
 
 <img src="AUSDT.jpeg" style="width:200px;margin:auto;display:block;border-radius:10px;">
 
-<input id="donateAddr"
-value="0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23"
-readonly>
+<input id="donateAddr" value="0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23" readonly>
 
 <button onclick="copyDonate()">Copy Address</button>
 
@@ -118,101 +115,138 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// INIT
+// FIREBASE CONFIG (FIXED FULL)
 const app = initializeApp({
-  apiKey:"AIzaSy...",
+  apiKey:"AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
   authDomain:"run-ai-80fb7.firebaseapp.com",
-  projectId:"run-ai-80fb7"
+  projectId:"run-ai-80fb7",
+  storageBucket:"run-ai-80fb7.appspot.com",
+  messagingSenderId:"962298240212",
+  appId:"1:962298240212:web:6642a45e94a6f583e3ef41"
 });
 
 const db = getFirestore(app);
 const auth = getAuth(app);
-
-// DOM
-const email = document.getElementById("email");
-const password = document.getElementById("password");
 
 // AUTH
 onAuthStateChanged(auth,u=>{
   document.getElementById("userStatus").innerText = u ? u.email : "Not logged in";
 });
 
-document.getElementById("loginBtn").onclick=()=>signInWithEmailAndPassword(auth,email.value,password.value);
-document.getElementById("signupBtn").onclick=async()=>{
-  const u=await createUserWithEmailAndPassword(auth,email.value,password.value);
-  await setDoc(doc(db,"users",u.user.uid),{earnings:0});
+// LOGIN FIX
+loginBtn.onclick=async()=>{
+  try{ await signInWithEmailAndPassword(auth,email.value,password.value); }
+  catch(e){ alert(e.message); }
 };
-document.getElementById("googleBtn").onclick=()=>signInWithPopup(auth,new GoogleAuthProvider());
 
-// FIRESTORE
+signupBtn.onclick=async()=>{
+  try{
+    const u=await createUserWithEmailAndPassword(auth,email.value,password.value);
+    await setDoc(doc(db,"users",u.user.uid),{totalEarnings:0,withdrawableBalance:0});
+  }catch(e){ alert(e.message); }
+};
+
+googleBtn.onclick=async()=>{
+  try{ await signInWithPopup(auth,new GoogleAuthProvider()); }
+  catch(e){ alert(e.message); }
+};
+
+// FIRESTORE INIT FIX
 const ref = doc(db,"run_ai_metrics","dashboard");
-
-if(!(await getDoc(ref)).exists()){
+let snap = await getDoc(ref);
+if(!snap.exists()){
   await setDoc(ref,{video1:0,video2:0,audio:0,likes:0,cpm:1});
 }
 
 let CPM=1;
 
+// LIVE DATA
 onSnapshot(ref,s=>{
   let d=s.data();
-  let t=(d.video1||0)+(d.video2||0)+(d.audio||0);
 
-  document.getElementById("v1").innerText=d.video1||0;
-  document.getElementById("v2").innerText=d.video2||0;
-  document.getElementById("a").innerText=d.audio||0;
+  let v1=d.video1||0,v2=d.video2||0,a=d.audio||0;
+  let total=v1+v2+a;
+
+  document.getElementById("v1").innerText=v1;
+  document.getElementById("v2").innerText=v2;
+  document.getElementById("a").innerText=a;
   document.getElementById("likes").innerText=d.likes||0;
-  document.getElementById("total").innerText=t;
+  document.getElementById("total").innerText=total;
 
   CPM=d.cpm||1;
   document.getElementById("cpm").innerText=CPM;
-
-  document.getElementById("rev").innerText=((t/1000)*CPM).toFixed(2);
+  document.getElementById("rev").innerText=((total/1000)*CPM).toFixed(2);
 });
 
-// TRACKING
-video1.onplay=()=>updateDoc(ref,{video1:increment(1)});
-video2.onplay=()=>updateDoc(ref,{video2:increment(1)});
-audio.onplay=()=>updateDoc(ref,{audio:increment(1)});
-document.getElementById("likeBtn").onclick=()=>updateDoc(ref,{likes:increment(1)});
+// TRACKING FIX (prevents spam double count)
+let f1=false,f2=false,f3=false;
 
-// CPM
-document.getElementById("cpmBtn").onclick=()=>{
-  let v=+document.getElementById("base").value;
-  updateDoc(ref,{cpm:v});
+video1.onplay=async()=>{
+  if(!f1){f1=true; await updateDoc(ref,{video1:increment(1)});}
+};
+video1.onended=()=>f1=false;
+
+video2.onplay=async()=>{
+  if(!f2){f2=true; await updateDoc(ref,{video2:increment(1)});}
+};
+video2.onended=()=>f2=false;
+
+audio.onplay=async()=>{
+  if(!f3){f3=true; await updateDoc(ref,{audio:increment(1)});}
+};
+audio.onended=()=>f3=false;
+
+likeBtn.onclick=()=>updateDoc(ref,{likes:increment(1)});
+
+// CPM FIX
+cpmBtn.onclick=async()=>{
+  let v=+document.getElementById("base").value || 1;
+  await updateDoc(ref,{cpm:v});
 };
 
-// WALLET
+// WALLET FIX
 let provider, signer;
 
-document.getElementById("connectBtn").onclick=async()=>{
-  provider=new ethers.providers.Web3Provider(window.ethereum);
-  await provider.send("eth_requestAccounts",[]);
-  signer=provider.getSigner();
-  document.getElementById("wallet").innerText=await signer.getAddress();
-  document.getElementById("payBtn").disabled=false;
+connectBtn.onclick=async()=>{
+  try{
+    if(!window.ethereum) return alert("Install MetaMask");
+    provider=new ethers.providers.Web3Provider(window.ethereum);
+    await provider.send("eth_requestAccounts",[]);
+    signer=provider.getSigner();
+    wallet.innerText=await signer.getAddress();
+    payBtn.disabled=false;
+  }catch(e){ alert(e.message); }
 };
 
-document.getElementById("payBtn").onclick=async()=>{
-  const token=new ethers.Contract(
-    "0x55d398326f99059fF775485246999027B3197955",
-    ["function transfer(address,uint) returns(bool)","function decimals() view returns(uint8)"],
-    signer
-  );
-  const d=await token.decimals();
-  const tx=await token.transfer("0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23",ethers.utils.parseUnits("5",d));
-  document.getElementById("payStatus").innerText="Processing...";
-  await tx.wait();
-  document.getElementById("payStatus").innerText="Subscription Active";
+payBtn.onclick=async()=>{
+  try{
+    const token=new ethers.Contract(
+      "0x55d398326f99059fF775485246999027B3197955",
+      ["function transfer(address,uint) returns(bool)","function decimals() view returns(uint8)"],
+      signer
+    );
+
+    const d=await token.decimals();
+    const tx=await token.transfer("0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23",ethers.utils.parseUnits("5",d));
+
+    payStatus.innerText="Processing...";
+    await tx.wait();
+    payStatus.innerText="Subscription Active ✅";
+
+  }catch(e){
+    payStatus.innerText="Failed ❌";
+  }
 };
 
-// UI
-window.show=(id)=>{
+// UI NAV
+window.show=id=>{
   document.querySelectorAll(".page").forEach(p=>p.style.display="none");
   document.getElementById(id).style.display="block";
 };
 
+// COPY
 window.copyDonate=()=>{
-  navigator.clipboard.writeText(document.getElementById("donateAddr").value);
+  navigator.clipboard.writeText(donateAddr.value);
   alert("Copied");
 };
 </script>
