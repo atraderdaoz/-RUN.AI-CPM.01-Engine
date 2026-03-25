@@ -1,55 +1,160 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>©®™🏃🏿‍♂️RUN.AI CPM Engine</title>
 
+<script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+
+<style>
+body { margin:0; font-family:Arial; background:#0d0d0d; color:#fff; }
+.container { max-width:1000px; margin:auto; padding:20px; }
+.card { background:#161616; padding:20px; border-radius:12px; margin-bottom:20px; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+video,audio { width:100%; border-radius:10px; }
+button,input { width:100%; padding:10px; margin-top:10px; border:none; border-radius:6px; }
+button { background:#00c27a; color:#fff; cursor:pointer; }
+.menu { display:flex; gap:10px; padding:10px; background:#111; }
+.page { display:none; }
+</style>
+</head>
+
+<body>
+
+<!-- MENU -->
+<div class="menu">
+<button onclick="show('dashboard')">📊 Dashboard</button>
+<button onclick="show('subscription')">💳 Subscription</button>
+<button onclick="show('donation')">💰 Donate</button>
+</div>
+
+<div class="container">
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="page" style="display:block;">
+
+<div class="card">
+<h2>🔐 Login</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn">Login</button>
+<button id="signupBtn">Sign Up</button>
+<button id="googleBtn">Google</button>
+<div>User: <span id="userStatus">Not logged in</span></div>
+</div>
+
+<h1>RUN.AI CPM Engine</h1>
+
+<div class="grid">
+<div class="card">
+<h3>Video 1</h3>
+<video id="video1" controls><source src="VID-20260317-WA0001.mp4"></video>
+<div>Plays: <span id="v1El">0</span></div>
+</div>
+
+<div class="card">
+<h3>Video 2</h3>
+<video id="video2" controls><source src="G-Riddim.mp4"></video>
+<div>Plays: <span id="v2El">0</span></div>
+</div>
+</div>
+
+<div class="card">
+<h3>Audio</h3>
+<audio id="audio" controls><source src="lespri.mp3"></audio>
+<div>Plays: <span id="aEl">0</span></div>
+</div>
+
+<div class="card">
+<h3>Stats</h3>
+<div>Total: <span id="totalEl">0</span></div>
+<div>Likes: <span id="likesEl">0</span></div>
+<div>Revenue: $<span id="revEl">0</span></div>
+<button id="likeBtn">Like</button>
+</div>
+
+<div class="card">
+<h3>CPM</h3>
+<input id="base" value="1">
+<button id="cpmBtn">Update CPM</button>
+<div>$<span id="cpmEl">1</span></div>
+</div>
+
+</div>
+
+<!-- SUBSCRIPTION -->
+<div id="subscription" class="page">
+<div class="card">
+<h2>💳 Subscription (5 USDT)</h2>
+<button id="connectBtn">Connect Wallet</button>
+<button id="payBtn" disabled>Activate</button>
+<div id="wallet">Wallet: not connected</div>
+<div id="payStatus">Status: idle</div>
+</div>
+</div>
+
+<!-- DONATION -->
+<div id="donation" class="page">
+<div class="card">
+<h2>💰 Donations</h2>
+
+<img src="AUSDT.jpeg" style="width:200px;margin:auto;display:block;border-radius:10px;">
+
+<input id="donateAddr"
+value="0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23"
+readonly>
+
+<button onclick="copyDonate()">Copy Address</button>
+
+<div style="color:#ff7777;">Send USDT (BSC only)</div>
+</div>
+</div>
+
+</div>
+
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-// GLOBALS
-let db, auth, ref, CPM = 1;
+// ================= INIT =================
+const app = initializeApp({
+  apiKey:"AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
+  authDomain:"run-ai-80fb7.firebaseapp.com",
+  projectId:"run-ai-80fb7",
+  storageBucket:"run-ai-80fb7.appspot.com",
+  messagingSenderId:"962298240212",
+  appId:"1:962298240212:web:6642a45e94a6f583e3ef41"
+});
+
+const db = getFirestore(app);
+const auth = getAuth(app);
+const ref = doc(db,"run_ai_metrics","dashboard");
+
+let CPM = 1;
 let provider, signer;
 
-// INIT APP SAFELY
+// ================= INIT SAFE =================
 async function init(){
   try{
-    const app = initializeApp({
-      apiKey:"AIzaSyCyLB2daQh2tJL9d8DWxUPRmuyIZu-8Zzg",
-      authDomain:"run-ai-80fb7.firebaseapp.com",
-      projectId:"run-ai-80fb7",
-      storageBucket:"run-ai-80fb7.appspot.com",
-      messagingSenderId:"962298240212",
-      appId:"1:962298240212:web:6642a45e94a6f583e3ef41"
-    });
-
-    db = getFirestore(app);
-    auth = getAuth(app);
-    ref = doc(db,"run_ai_metrics","dashboard");
-
-    // SAFE INIT DATA
     const snap = await getDoc(ref);
     if(!snap.exists()){
       await setDoc(ref,{
-        video1:0,
-        video2:0,
-        audio:0,
-        likes:0,
-        cpm:1
+        video1:0,video2:0,audio:0,likes:0,cpm:1
       });
     }
-
     bindAuth();
     bindUI();
-    startListeners();
-
+    startRealtime();
   }catch(e){
     console.error(e);
-    alert("System failed to load");
+    alert("🔥 System failed to load");
   }
 }
-
 init();
-
 
 // ================= AUTH =================
 function bindAuth(){
@@ -68,7 +173,7 @@ function bindAuth(){
     try{
       const u = await createUserWithEmailAndPassword(auth,email.value,password.value);
       await setDoc(doc(db,"users",u.user.uid),{
-        totalEarnings:0,
+        earnings:0,
         withdrawableBalance:0
       });
     }catch(e){ alert(e.message); }
@@ -76,17 +181,21 @@ function bindAuth(){
 
   googleBtn.onclick = async ()=>{
     try{
-      await signInWithPopup(auth,new GoogleAuthProvider());
+      const res = await signInWithPopup(auth,new GoogleAuthProvider());
+      const uRef = doc(db,"users",res.user.uid);
+
+      if(!(await getDoc(uRef)).exists()){
+        await setDoc(uRef,{earnings:0,withdrawableBalance:0});
+      }
     }catch(e){ alert(e.message); }
   };
 }
 
+// ================= REALTIME =================
+function startRealtime(){
 
-// ================= DATA =================
-function startListeners(){
-
-  onSnapshot(ref,(snap)=>{
-    const d = snap.data();
+  onSnapshot(ref,s=>{
+    const d = s.data();
 
     const v1 = d.video1 || 0;
     const v2 = d.video2 || 0;
@@ -94,25 +203,23 @@ function startListeners(){
 
     const total = v1 + v2 + a;
 
-    document.getElementById("v1").innerText = v1;
-    document.getElementById("v2").innerText = v2;
-    document.getElementById("a").innerText  = a;
-    document.getElementById("likes").innerText = d.likes || 0;
-    document.getElementById("total").innerText = total;
+    v1El.innerText = v1;
+    v2El.innerText = v2;
+    aEl.innerText  = a;
+    likesEl.innerText = d.likes || 0;
+    totalEl.innerText = total;
 
     CPM = d.cpm || 1;
-    document.getElementById("cpm").innerText = CPM;
-    document.getElementById("rev").innerText = ((total/1000)*CPM).toFixed(2);
+    cpmEl.innerText = CPM;
+    revEl.innerText = ((total/1000)*CPM).toFixed(2);
   });
 
 }
 
-
 // ================= UI =================
 function bindUI(){
 
-  // ANTI-REPLAY CONTROL
-  let f1=false, f2=false, f3=false;
+  let f1=false,f2=false,f3=false;
 
   video1.onplay = async ()=>{
     if(!f1){
@@ -145,7 +252,6 @@ function bindUI(){
     await updateDoc(ref,{cpm:v});
   };
 
-  // WALLET SAFE
   connectBtn.onclick = async ()=>{
     try{
       if(!window.ethereum){
@@ -181,26 +287,23 @@ function bindUI(){
         signer
       );
 
-      const decimals = await token.decimals();
+      const d = await token.decimals();
 
       const tx = await token.transfer(
         "0xe5e170739f5ba2a01e1ba878e8a0580a0f247a23",
-        ethers.utils.parseUnits("5", decimals)
+        ethers.utils.parseUnits("5",d)
       );
 
-      payStatus.innerText = "Processing...";
+      payStatus.innerText="Processing...";
       await tx.wait();
-
-      payStatus.innerText = "Subscription Active ✅";
+      payStatus.innerText="Subscription Active ✅";
 
     }catch(e){
-      console.error(e);
-      payStatus.innerText = "Failed ❌";
+      payStatus.innerText="Failed ❌";
     }
   };
 
 }
-
 
 // ================= NAV =================
 window.show = (id)=>{
@@ -215,3 +318,6 @@ window.copyDonate = ()=>{
 };
 
 </script>
+
+</body>
+</html>
