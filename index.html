@@ -231,7 +231,29 @@ function bindAuth(){
       alert(e.message);
     }
   };
-}
+async function handleRedirect(){
+  try{
+    const result = await getRedirectResult(auth);
+
+    if(result){
+      const user = result.user;
+
+      const uRef = doc(db,"users",user.uid);
+
+      if(!(await getDoc(uRef)).exists()){
+        await setDoc(uRef,{
+          earnings:0,
+          withdrawableBalance:0
+        });
+      }
+
+      console.log("✅ Google login success");
+    }
+
+  }catch(e){
+    console.error(e);
+  }
+}}
 
 // ================= REALTIME =================
 function startRealtime(){
