@@ -117,8 +117,19 @@ readonly>
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+import { 
+  getAuth, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signInWithRedirect,
+  getRedirectResult,
+  setPersistence,
+  browserLocalPersistence,
+  GoogleAuthProvider, 
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 // ================= INIT =================
 const app = initializeApp({
@@ -140,21 +151,53 @@ let provider, signer;
 // ================= INIT SAFE =================
 async function init(){
   try{
+
+    // ✅ KEEP USER LOGGED IN
+    await setPersistence(auth, browserLocalPersistence);
+
     const snap = await getDoc(ref);
     if(!snap.exists()){
       await setDoc(ref,{
         video1:0,video2:0,audio:0,likes:0,cpm:1
       });
     }
+
+    await handleRedirect(); // ✅ FIX GOOGLE LOGIN
+
     bindAuth();
     bindUI();
     startRealtime();
+
   }catch(e){
     console.error(e);
     alert("🔥 System failed to load");
   }
 }
 init();
+
+// ================= GOOGLE REDIRECT HANDLER =================
+async function handleRedirect(){
+  try{
+    const result = await getRedirectResult(auth);
+
+    if(result){
+      const user = result.user;
+      const uRef = doc(db,"users",user.uid);
+
+      if(!(await getDoc(uRef)).exists()){
+        await setDoc(uRef,{
+          earnings:0,
+          withdrawableBalance:0
+        });
+      }
+
+      console.log("✅ Google login success");
+    }
+
+  }catch(e){
+    console.error("Redirect error:", e);
+  }
+}
 
 // ================= AUTH =================
 function bindAuth(){
@@ -179,15 +222,14 @@ function bindAuth(){
     }catch(e){ alert(e.message); }
   };
 
+  // 🔥 FIXED GOOGLE LOGIN
   googleBtn.onclick = async ()=>{
     try{
-      const res = await signInWithPopup(auth,new GoogleAuthProvider());
-      const uRef = doc(db,"users",res.user.uid);
-
-      if(!(await getDoc(uRef)).exists()){
-        await setDoc(uRef,{earnings:0,withdrawableBalance:0});
-      }
-    }catch(e){ alert(e.message); }
+      const provider = new GoogleAuthProvider();
+      await signInWithRedirect(auth, provider);
+    }catch(e){
+      alert(e.message);
+    }
   };
 }
 
@@ -252,6 +294,7 @@ function bindUI(){
     await updateDoc(ref,{cpm:v});
   };
 
+  // WALLET
   connectBtn.onclick = async ()=>{
     try{
       if(!window.ethereum){
@@ -316,7 +359,6 @@ window.copyDonate = ()=>{
   navigator.clipboard.writeText(donateAddr.value);
   alert("Copied");
 };
-
 </script>
 
 </body>
