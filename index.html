@@ -117,7 +117,7 @@ readonly>
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc, increment } 
 from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+import { setPersistence, browserLocalPersistence } from "firebase/auth";
 import { 
   getAuth, 
   signInWithEmailAndPassword, 
@@ -160,6 +160,7 @@ async function init(){
       await setDoc(ref,{
         video1:0,video2:0,audio:0,likes:0,cpm:1
       });
+      await handleRedirect();
     }
 
     await handleRedirect(); // ✅ FIX GOOGLE LOGIN
